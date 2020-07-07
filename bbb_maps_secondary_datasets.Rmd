@@ -1,0 +1,88 @@
+---
+title: "Maps of seconday data sites"
+author: "GGL"
+date: "03/07/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Plotting sites of secondary datasets on map (see Excel for details on datasets)
+
+```{r}
+install.packages("tmap")
+install.packages("readxl")
+install.packages("ggmaps")
+```
+
+# Read in packages 
+```{r}
+library(rworldmap)
+library(ggplot2)
+library(ggmaps) 
+theme_set(theme_bw())
+library(sf)
+library(rnaturalearth)
+library(rnaturalearthdata)
+library(dplyr)
+library(tmap)
+library(readxl)
+library(countrycode)
+```
+
+
+# set file paths
+```{r}
+path_map_shp <- "/Users/georgiagore-langton/OneDrive - London School of Hygiene and Tropical Medicine/PhD_1/Training/Learning R/Mapping in R_MCairns code"
+
+path_data <- "/Users/georgiagore-langton/OneDrive - London School of Hygiene and Tropical Medicine/PhD_1/Data sources"
+```
+
+# Experiment with using a tibble rather than dataframe 
+
+```{r}
+data <- tibble(country = c("Tanzania", "Benin", "Kenya", "Malawi", "Tanzania", "Uganda", "Kenya", "Tanzania", "Malawi", "Zambia", "Malawi"),
+               ref = c("D. Watson-Jones", "Pfizer trial", "Pfizer trial", "Pfizer trial", "Pfizer trial", "Pfizer trial", "IMPROVE", "IMRPOVE", "IMPROVE", "Nchelenge prospective cohort", "SP and AZ trial"))
+```
+
+# add study year
+```{r}
+data <- data %>% mutate(year = if_else(ref=="D. Watson-Jones", "1997-2000",
+                              if_else(ref=="Pfizer trial", "2010-13", 
+                              if_else(ref == "IMPROVE", "2017-20", 
+                              if_else(ref == "Nchelenge prospective cohort", "2013-14", "2003-06")))))
+```
+
+# dataset made in Excel with HF coordinates 
+```{r}
+long_lat <- read_excel(paste(path_data, "20200706_plotting study locations data.xlsx", sep="/"))
+```
+
+
+# generate iso3 code
+```{r}
+countries <- c(long_lat$Country)
+iso3 <- countrycode(countries, origin = 'country.name', destination = 'iso3c')
+long_lat$iso3 <- iso3 
+```
+
+# Read in shape file Africa country map
+
+```{r}
+shp0 <- readOGR(path_map_shp, layer=  "africa_countries_from_admin1")
+plot(shp0)
+```
+
+```{r}
+plot(shp0)
+```
+
+
+```{r}
+
+ggplot + geom_polygon(data = shp0, aes(x = long, y = lat, group = group), colour = "black", fill = NA)
+
+```
+
