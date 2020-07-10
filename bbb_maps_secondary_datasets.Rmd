@@ -11,27 +11,26 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Plotting sites of secondary datasets on map (see Excel for details on datasets)
 
+Check to see if packages are installed. Install them if they are not, then load them into the R session.
 ```{r}
-install.packages("tmap")
-install.packages("readxl")
-install.packages("ggmaps")
+ipak <- function(pkg){
+  new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
+  if (length(new.pkg)) 
+    install.packages(new.pkg, dependencies = TRUE)
+  sapply(pkg, require, character.only = TRUE)
+}
+
 ```
 
-# Read in packages 
+Load packages (velox package not loading so removed)
 ```{r}
-library(rworldmap)
-library(ggplot2)
-library(ggmaps) 
-theme_set(theme_bw())
-library(sf)
-library(rnaturalearth)
-library(rnaturalearthdata)
-library(dplyr)
-library(tmap)
-library(readxl)
-library(countrycode)
-```
+# List of packages
 
+packages <- c("tidyverse","reshape2","readxl","foreign",
+              "sf","rworldmap","ggplot2","dplyr","tmap",
+              "countrycode", "rgdal", "ggrepel")
+ipak(packages)
+```
 
 # set file paths
 ```{r}
@@ -40,22 +39,8 @@ path_map_shp <- "/Users/georgiagore-langton/OneDrive - London School of Hygiene 
 path_data <- "/Users/georgiagore-langton/OneDrive - London School of Hygiene and Tropical Medicine/PhD_1/Data sources"
 ```
 
-# Experiment with using a tibble rather than dataframe 
 
-```{r}
-data <- tibble(country = c("Tanzania", "Benin", "Kenya", "Malawi", "Tanzania", "Uganda", "Kenya", "Tanzania", "Malawi", "Zambia", "Malawi"),
-               ref = c("D. Watson-Jones", "Pfizer trial", "Pfizer trial", "Pfizer trial", "Pfizer trial", "Pfizer trial", "IMPROVE", "IMRPOVE", "IMPROVE", "Nchelenge prospective cohort", "SP and AZ trial"))
-```
-
-# add study year
-```{r}
-data <- data %>% mutate(year = if_else(ref=="D. Watson-Jones", "1997-2000",
-                              if_else(ref=="Pfizer trial", "2010-13", 
-                              if_else(ref == "IMPROVE", "2017-20", 
-                              if_else(ref == "Nchelenge prospective cohort", "2013-14", "2003-06")))))
-```
-
-# dataset made in Excel with HF coordinates 
+# import dataset made in Excel with HF coordinates 
 ```{r}
 long_lat <- read_excel(paste(path_data, "20200706_plotting study locations data.xlsx", sep="/"))
 ```
@@ -75,14 +60,51 @@ shp0 <- readOGR(path_map_shp, layer=  "africa_countries_from_admin1")
 plot(shp0)
 ```
 
+# some data managemebt before plotting
+
 ```{r}
-plot(shp0)
+long_lat <- long_lat %>% group_by(Country) %>% 
+    mutate(n=row_number()) %>% 
+  ungroup() %>% 
+   mutate(study_lab = paste(Study, Year, sep = ", "))
+
+# same study has multiple sites very near each other- they overlap in map - so only plot once for each study in each site
+
+long_lat_plot <- long_lat %>% group_by(Study, Country) %>% 
+  mutate(n_cont_study = row_number()) %>% 
+  filter(n_cont_study == 1)
+
 ```
 
 
+
+# convert shape file to dataframe
+
+```{r}
+plot <- fortify(shp0)
+```
+
+
+# plot map with study sites marked
+
 ```{r}
 
-ggplot + geom_polygon(data = shp0, aes(x = long, y = lat, group = group), colour = "black", fill = NA)
-
+ggplot() + geom_path(data = plot, 
+          aes(x = long, y = lat, group = group),
+          color = 'grey', fill = 'white', size = .2) + coord_map() + 
+  geom_point(data = long_lat_plot, aes(x = Long, y = Lat, colour = study_lab), size = 1, alpha = 9/10) +
+  geom_text_repel(data=long_lat_plot, aes(x = Long, y = Lat, label=if_else(n==1, Country,""))) +
+  theme(axis.line=element_blank(),axis.text.x=element_blank(),
+          axis.text.y=element_blank(),axis.ticks=element_blank(),
+          axis.title.x=element_blank(),
+          axis.title.y=element_blank(),
+          panel.background=element_blank(),panel.border=element_blank(),panel.grid.major=element_blank(),
+          panel.grid.minor=element_blank(),plot.background=element_blank()) +
+   theme(legend.key=element_blank()) +
+   coord_sf(xlim = c(-20, 55), ylim = c(-20,15), expand = FALSE) +
+   labs(colour = "Study")
 ```
+
+
+
 

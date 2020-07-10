@@ -12,7 +12,10 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r}
 library(tidyverse)
 library(readxl)
+library(RColorBrewer)
+
 ```
+
 ```{r}
 path_numbers_risk_graph <- "/Users/georgiagore-langton/OneDrive - London School of Hygiene and Tropical Medicine/PhD_1/R/20200706_number at risk flow diagram"
 ```
@@ -25,13 +28,27 @@ numbers <- numbers %>% mutate(n_plot = round(n/1000000, 2),
                               n_label = paste(as.character(n_plot), "M", sep=" "))
 ```
 
+# adding superscript to variables to denote references
+```{r}
+numbers <- numbers %>% mutate(var_ref = if_else(ref=="PhD Objective One", paste(as.character(var), "*", sep=""),  
+                              if_else(ref=="World Malaria Report 2018", paste(as.character(var), "", sep=""), 
+                                      if_else(ref=="Chico et al. JAMA", paste(as.character(var), "³", sep="" ), 
+                                              if_else(ref=="Chaponda et al. ASTMH", paste(as.character(var), "⁴", sep=""), "NA")))))
+```
+
+# set colour palet
+```{r}
+num <- 11
+mycolors <- c(colorRampPalette(brewer.pal(8, "Spectral"))(num))
+```
+
 # all left aligned
 ```{r}
 
 plot <- numbers %>% 
 ggplot(., aes(n_plot, y, colour = var)) +
  geom_path() +
-geom_text(aes(label=ifelse(n==0,as.character(var),'')),hjust=0, vjust=-0.4) + 
+  geom_text(aes(label=ifelse(n==0,as.character(var_ref),'')),hjust=0, vjust=-0.4) + 
 geom_text(aes(size= , label=ifelse(n!=0,as.character(n_label),'')),hjust=0, vjust=1) + 
 theme(legend.position = "none") + theme(axis.line=element_blank(),axis.text.x=element_blank(),
           axis.text.y=element_blank(),axis.ticks=element_blank(),
@@ -39,9 +56,10 @@ theme(legend.position = "none") + theme(axis.line=element_blank(),axis.text.x=el
           axis.title.y=element_blank(),legend.position="none",
           panel.background=element_blank(),panel.border=element_blank(),panel.grid.major=element_blank(),
           panel.grid.minor=element_blank(),plot.background=element_blank())+ 
-    scale_x_continuous(expand = c(.1, .1))+ 
-    scale_y_continuous(expand = c(.1, .1))
+    scale_x_continuous(expand = c(.15, .15))+ 
+    scale_y_continuous(expand = c(.15, .15))
 plot
+
 
 ```
 
