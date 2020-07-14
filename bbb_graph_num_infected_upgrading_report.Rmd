@@ -25,20 +25,30 @@ numbers <- read_excel(paste(path_numbers_risk_graph, "20200706_MIP_STI_numbers_t
 ```
 ```{r}
 numbers <- numbers %>% mutate(n_plot = round(n/1000000, 2), 
-                              n_label = paste(as.character(n_plot), "M", sep=" "))
+                              n_plot2 = paste(as.character(n_plot), "M", sep=" "))
+```
+
+```{r}
+numbers$prev <- (numbers$prev*100)
+numbers$prev <- format(round(numbers$prev,2), nsmall = 2) 
+numbers$prev <- paste(as.character(numbers$prev), "%", sep = " ")
+
+# make label show % prevalence rather than nmber of women for all but total number at risk
+numbers <- numbers %>% mutate(n_label = if_else(ref=="PhD Objective One", n_plot2, prev))
+                                       
 ```
 
 # adding superscript to variables to denote references
 ```{r}
 numbers <- numbers %>% mutate(var_ref = if_else(ref=="PhD Objective One", paste(as.character(var), "*", sep=""),  
-                              if_else(ref=="World Malaria Report 2018", paste(as.character(var), "", sep=""), 
-                                      if_else(ref=="Chico et al. JAMA", paste(as.character(var), "³", sep="" ), 
-                                              if_else(ref=="Chaponda et al. ASTMH", paste(as.character(var), "⁴", sep=""), "NA")))))
+                              if_else(ref=="World Malaria Report 2018", paste(as.character(var), "**", sep=""), 
+                                      if_else(ref=="Chico et al. JAMA", paste(as.character(var), "***", sep="" ), 
+                                              if_else(ref=="Chaponda et al. ASTMH", paste(as.character(var), "****", sep=""), "NA")))))
 ```
 
-# set colour palet
+# set colour palet -
 ```{r}
-num <- 11
+num <- 
 mycolors <- c(colorRampPalette(brewer.pal(8, "Spectral"))(num))
 ```
 
@@ -66,15 +76,26 @@ plot
 
 # mixing up infection positioning
 ```{r}
-numbers <- numbers %>% mutate(n_plot2 = if_else(y<15, n_plot+10, n_plot))
+
+numbers <- numbers %>% mutate(n_plot_mix = if_else(var == "Co-infection", n_plot + 20,
+                                                   if_else(var == "MiP", n_plot + 30,
+                                                        if_else(var == "BV", n_plot + 15, 
+                                                                 if_else(var == "TV", n_plot + 22,
+                                                                          if_else(var == "Chlamydia", n_plot + 25,
+                                                                                   if_else(var == "Gonorrheae", n_plot + 10,
+                                                                                       if_else(var == "Syphillis", n_plot + 12,
+                                                                                               n_plot)))))))) %>%
+
 ```
+
+# plot with overlap of infections mixed 
 
 ```{r}
 
-plot2 <- numbers %>% 
-ggplot(., aes(n_plot2, y, colour = var)) +
+plot <- numbers %>% 
+ggplot(., aes(n_plot_mix, y, colour = var)) +
  geom_path() +
-geom_text(aes(label=ifelse(n==0,as.character(var),'')),hjust=0, vjust=-0.4) + 
+  geom_text(aes(label=ifelse(n==0,as.character(var_ref),'')),hjust=0, vjust=-0.4) + 
 geom_text(aes(size= , label=ifelse(n!=0,as.character(n_label),'')),hjust=0, vjust=1) + 
 theme(legend.position = "none") + theme(axis.line=element_blank(),axis.text.x=element_blank(),
           axis.text.y=element_blank(),axis.ticks=element_blank(),
@@ -82,8 +103,10 @@ theme(legend.position = "none") + theme(axis.line=element_blank(),axis.text.x=el
           axis.title.y=element_blank(),legend.position="none",
           panel.background=element_blank(),panel.border=element_blank(),panel.grid.major=element_blank(),
           panel.grid.minor=element_blank(),plot.background=element_blank())+ 
-    scale_x_continuous(expand = c(.1, .1))+ 
-    scale_y_continuous(expand = c(.1, .1))
-plot2
+    scale_x_continuous(expand = c(.15, .15))+ 
+    scale_y_continuous(expand = c(.15, .15))
+
+plot + scale_color_manual(values = c("aquamarine3", "aquamarine3", "dodgerblue3", "dodgerblue3", "darkorange1", "aquamarine3", "dodgerblue3", "brown3", "dodgerblue3", "aquamarine3", "dodgerblue3"))
+
 
 ```

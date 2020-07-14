@@ -37,6 +37,8 @@ ipak(packages)
 path_map_shp <- "/Users/georgiagore-langton/OneDrive - London School of Hygiene and Tropical Medicine/PhD_1/Training/Learning R/Mapping in R_MCairns code"
 
 path_data <- "/Users/georgiagore-langton/OneDrive - London School of Hygiene and Tropical Medicine/PhD_1/Data sources"
+
+path_save <- "/Users/georgiagore-langton/OneDrive - London School of Hygiene and Tropical Medicine/PhD_1/Upgrading/Upgrading Report"
 ```
 
 
@@ -89,7 +91,7 @@ plot <- fortify(shp0)
 
 ```{r}
 
-ggplot() + geom_path(data = plot, 
+plot <- ggplot() + geom_path(data = plot, 
           aes(x = long, y = lat, group = group),
           color = 'grey', fill = 'white', size = .2) + coord_map() + 
   geom_point(data = long_lat_plot, aes(x = Long, y = Lat, colour = study_lab), size = 1, alpha = 9/10) +
@@ -103,6 +105,10 @@ ggplot() + geom_path(data = plot,
    theme(legend.key=element_blank()) +
    coord_sf(xlim = c(-20, 55), ylim = c(-20,15), expand = FALSE) +
    labs(colour = "Study")
+
+plot + scale_color_brewer(palette = "Set1")
+
+ggsave(paste(path_save, "map_study_locations.pdf", sep="/"))
 ```
 
 
