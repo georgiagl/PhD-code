@@ -9,15 +9,32 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+
 ```{r}
-library(tidyverse)
-library(readxl)
-library(RColorBrewer)
+ipak <- function(pkg){
+  new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
+  if (length(new.pkg)) 
+    install.packages(new.pkg, dependencies = TRUE)
+  sapply(pkg, require, character.only = TRUE)
+}
 
 ```
 
+Load packages (velox package not loading so removed)
+```{r}
+# List of packages
+
+packages <- c("RColorBrewer", "readxl", "tidyverse", "ggplot2", "cowplot" )
+
+ipak(packages)
+```
+
+
 ```{r}
 path_numbers_risk_graph <- "/Users/georgiagore-langton/OneDrive - London School of Hygiene and Tropical Medicine/PhD_1/R/20200706_number at risk flow diagram"
+
+path_save <- "/Users/georgiagore-langton/OneDrive - London School of Hygiene and Tropical Medicine/PhD_1/Upgrading/Upgrading Report"
+
 ```
 
 ```{r}
@@ -46,11 +63,6 @@ numbers <- numbers %>% mutate(var_ref = if_else(ref=="PhD Objective One", paste(
                                               if_else(ref=="Chaponda et al. ASTMH", paste(as.character(var), "****", sep=""), "NA")))))
 ```
 
-# set colour palet -
-```{r}
-num <- 
-mycolors <- c(colorRampPalette(brewer.pal(8, "Spectral"))(num))
-```
 
 # all left aligned
 ```{r}
@@ -68,23 +80,24 @@ theme(legend.position = "none") + theme(axis.line=element_blank(),axis.text.x=el
           panel.grid.minor=element_blank(),plot.background=element_blank())+ 
     scale_x_continuous(expand = c(.15, .15))+ 
     scale_y_continuous(expand = c(.15, .15))
-plot
+
+plot + scale_color_manual(values = c("aquamarine3", "aquamarine3", "dodgerblue3", "dodgerblue3", "aquamarine3", "dodgerblue3", "brown3", "dodgerblue3", "aquamarine3", "dodgerblue3"))
 
 
 ```
 
 
-# mixing up infection positioning
+# mixing up infection positioning - Version 1
 ```{r}
 
-numbers <- numbers %>% mutate(n_plot_mix = if_else(var == "Co-infection", n_plot + 20,
-                                                   if_else(var == "MiP", n_plot + 30,
+numbers2 <- numbers %>% mutate(n_plot_mix = if_else(var == "Co-infection", n_plot + 20,
+                                                   if_else(var == "MiP", n_plot + 20,
                                                         if_else(var == "BV", n_plot + 15, 
                                                                  if_else(var == "TV", n_plot + 22,
                                                                           if_else(var == "Chlamydia", n_plot + 25,
-                                                                                   if_else(var == "Gonorrheae", n_plot + 10,
-                                                                                       if_else(var == "Syphillis", n_plot + 12,
-                                                                                               n_plot)))))))) %>%
+                                                                                   if_else(var == "Gonorrheae", n_plot + 22,
+                                                                                       if_else(var == "Syphillis", n_plot + 24,
+                                                                                               n_plot)))))))) 
 
 ```
 
@@ -92,7 +105,7 @@ numbers <- numbers %>% mutate(n_plot_mix = if_else(var == "Co-infection", n_plot
 
 ```{r}
 
-plot <- numbers %>% 
+plot2 <- numbers2 %>% 
 ggplot(., aes(n_plot_mix, y, colour = var)) +
  geom_path() +
   geom_text(aes(label=ifelse(n==0,as.character(var_ref),'')),hjust=0, vjust=-0.4) + 
@@ -106,7 +119,56 @@ theme(legend.position = "none") + theme(axis.line=element_blank(),axis.text.x=el
     scale_x_continuous(expand = c(.15, .15))+ 
     scale_y_continuous(expand = c(.15, .15))
 
-plot + scale_color_manual(values = c("aquamarine3", "aquamarine3", "dodgerblue3", "dodgerblue3", "darkorange1", "aquamarine3", "dodgerblue3", "brown3", "dodgerblue3", "aquamarine3", "dodgerblue3"))
+plot2 <- plot2 + scale_color_manual(values = c("aquamarine3", "aquamarine3", "dodgerblue3", "dodgerblue3", "aquamarine3", "dodgerblue3", "brown3", "dodgerblue3", "aquamarine3", "dodgerblue3"))
+
 
 
 ```
+
+# mixing up infection positioning - Version 2
+```{r}
+
+numbers3 <- numbers %>% mutate(n_plot_mix = if_else(var == "MiP", n_plot + 13,
+                                                        if_else(var == "BV", n_plot + 2, 
+                                                                 if_else(var == "TV", n_plot + 18,
+                                                                          if_else(var == "Chlamydia", n_plot + 30,
+                                                                                   if_else(var == "Gonorrheae", n_plot + 0,
+                                                                                       if_else(var == "Syphillis", n_plot + 7,
+                                                                                               n_plot)))))))
+
+```
+
+# plot with overlap of infections mixed 
+
+```{r}
+
+plot3 <- numbers3 %>% 
+ggplot(., aes(n_plot_mix, y, colour = var)) +
+ geom_path() +
+  geom_text(aes(label=ifelse(n==0,as.character(var_ref),'')),hjust=0, vjust=-0.4) + 
+geom_text(aes(size= , label=ifelse(n!=0,as.character(n_label),'')),hjust=0, vjust=1) + 
+theme(legend.position = "none") + theme(axis.line=element_blank(),axis.text.x=element_blank(),
+          axis.text.y=element_blank(),axis.ticks=element_blank(),
+          axis.title.x=element_blank(),
+          axis.title.y=element_blank(),legend.position="none",
+          panel.background=element_blank(),panel.border=element_blank(),panel.grid.major=element_blank(),
+          panel.grid.minor=element_blank(),plot.background=element_blank())+ 
+    scale_x_continuous(expand = c(.15, .15))+ 
+    scale_y_continuous(expand = c(.15, .15))
+
+plot3 <- plot3 + scale_color_manual(values = c("aquamarine3", "aquamarine3", "dodgerblue3", "dodgerblue3", "aquamarine3", "dodgerblue3", "brown3", "dodgerblue3", "aquamarine3", "dodgerblue3"))
+
+
+
+```
+
+```{r}
+# combine the over lapping and not at all overlapping plots for upgrading report 
+
+plotgrid <- plot_grid(plot3, plot2, labels = c('A', 'B'), ncol = 1, label_size = 12)
+plotgrid
+
+ggsave(paste(path_save, "numbers_infected_overlap.pdf", sep="/"))
+
+```
+

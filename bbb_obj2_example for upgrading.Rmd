@@ -1,0 +1,61 @@
+---
+title: "Untitled"
+author: "GGL"
+date: "24/07/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+path_data <- "/Users/georgiagore-langton/OneDrive - London School of Hygiene and Tropical Medicine/PhD_1/MiP Risk_SSA_chap2/STATcompilerExport202072_174810.xlsx"
+```
+
+```{r}
+ipak <- function(pkg){
+  new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
+  if (length(new.pkg)) 
+    install.packages(new.pkg, dependencies = TRUE)
+  sapply(pkg, require, character.only = TRUE)
+}
+
+```
+
+Load packages (velox package not loading so removed)
+```{r}
+# List of packages
+
+packages <- c("janitor", "readxl", "tidyverse", "ggplot2" )
+
+ipak(packages)
+```
+
+
+``` {r}
+
+#disable scientific notation -(so numbers not exponentiated)
+options(scipen = 999)
+```
+
+```{r}
+kenya <-  read_excel(path_data, sheet = "LBW estimates")
+
+kenya$TFR <- as.numeric(kenya$TFR)
+
+summary(kenya)
+```
+
+
+```{r}
+plot <- kenya %>% 
+ggplot(., aes(x=year, y=pregnancies, fill = pregnancies)) + 
+  geom_bar(stat="identity") + 
+  geom_point(aes(x=year, y=TFR)) + 
+  scale_y_continuous(name = "Pregancies", 
+    sec.axis = sec_axis(name = "TFR"))
+plot
+```
+
